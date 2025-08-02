@@ -9,9 +9,9 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.fattahpour</groupId>
-	<artifactId>ksr</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
-	<name>ksr</name>
+        <artifactId>ksra</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+        <name>ksra</name>
 	<description>Kafka Schema Registry Analytics (KSRA)</description>
 	<url/>
 	<licenses>

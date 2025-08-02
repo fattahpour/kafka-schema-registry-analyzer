@@ -8,14 +8,19 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * WebFlux controller exposing basic Schema Registry operations.
@@ -25,9 +30,12 @@ import reactor.core.publisher.Mono;
 public class SchemaRegistryController {
 
     private final SchemaRegistryService service;
+    private final WebClient webClient;
 
-    public SchemaRegistryController(SchemaRegistryService service) {
+    public SchemaRegistryController(SchemaRegistryService service, WebClient.Builder builder,
+                                    @Value("${schema.registry.url:http://localhost:8081}") String baseUrl) {
         this.service = service;
+        this.webClient = builder.baseUrl(baseUrl).build();
     }
 
     @Operation(summary = "List all schema subjects")
@@ -64,6 +72,36 @@ public class SchemaRegistryController {
             @PathVariable String subject,
             @RequestBody RegisterSchemaRequest request) {
         return service.registerSchema(subject, request.schema());
+    }
+
+    @Operation(summary = "Get summary for all schema registry subjects")
+    @ApiResponse(responseCode = "200", description = "Subject summaries")
+    @GetMapping("/api/schema-registry/summary")
+    public Flux<Map<String, Object>> schemaRegistrySummary() {
+        return webClient.get()
+                .uri("/subjects")
+                .retrieve()
+                .bodyToFlux(String.class)
+                .flatMap(subject -> Mono.zip(
+                        Mono.just(subject),
+                        webClient.get()
+                                .uri("/subjects/{subject}/versions", subject)
+                                .retrieve()
+                                .bodyToFlux(Integer.class)
+                                .collectList(),
+                        webClient.get()
+                                .uri("/subjects/{subject}/versions/latest", subject)
+                                .retrieve()
+                                .bodyToMono(Map.class)
+                ).map(tuple -> {
+                    Map<String, Object> result = new HashMap<>();
+                    String subjectName = tuple.getT1();
+                    result.put("subject", subjectName);
+                    result.put("topic", subjectName.replaceAll("-(value|key)$", ""));
+                    result.put("versions", tuple.getT2());
+                    result.put("latestSchema", tuple.getT3());
+                    return result;
+                }));
     }
 }
 

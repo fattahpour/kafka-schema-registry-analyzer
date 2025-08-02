@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -74,34 +75,30 @@ public class SchemaRegistryController {
         return service.registerSchema(subject, request.schema());
     }
 
-    @Operation(summary = "Get summary for all schema registry subjects")
-    @ApiResponse(responseCode = "200", description = "Subject summaries")
-    @GetMapping("/api/schema-registry/summary")
-    public Flux<Map<String, Object>> schemaRegistrySummary() {
-        return webClient.get()
-                .uri("/subjects")
-                .retrieve()
-                .bodyToFlux(String.class)
-                .flatMap(subject -> Mono.zip(
-                        Mono.just(subject),
-                        webClient.get()
-                                .uri("/subjects/{subject}/versions", subject)
-                                .retrieve()
-                                .bodyToFlux(Integer.class)
-                                .collectList(),
-                        webClient.get()
-                                .uri("/subjects/{subject}/versions/latest", subject)
-                                .retrieve()
-                                .bodyToMono(Map.class)
-                ).map(tuple -> {
-                    Map<String, Object> result = new HashMap<>();
-                    String subjectName = tuple.getT1();
-                    result.put("subject", subjectName);
-                    result.put("topic", subjectName.replaceAll("-(value|key)$", ""));
-                    result.put("versions", tuple.getT2());
-                    result.put("latestSchema", tuple.getT3());
-                    return result;
-                }));
+    @Operation(summary = "Get summary for a schema registry subject")
+    @ApiResponse(responseCode = "200", description = "Subject summary")
+    @GetMapping("/api/schema-registry/summary/{subject}")
+    public Flux<Map<String, Object>> schemaRegistrySummary(
+            @Parameter(description = "Subject name")
+            @PathVariable String subject) {
+        return Mono.zip(
+                webClient.get()
+                        .uri("/subjects/{subject}/versions", Map.of("subject", subject))
+                        .retrieve()
+                        .bodyToFlux(Integer.class)
+                        .collectList(),
+                webClient.get()
+                        .uri("/subjects/{subject}/versions/latest", Map.of("subject", subject))
+                        .retrieve()
+                        .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+        ).map(tuple -> {
+            Map<String, Object> result = new HashMap<>();
+            result.put("subject", subject);
+            result.put("topic", subject.replaceAll("-(value|key)$", ""));
+            result.put("versions", tuple.getT1());
+            result.put("latestSchema", tuple.getT2());
+            return result;
+        }).flux();
     }
 }
 

@@ -66,6 +66,24 @@ class SchemaRegistryControllerTest {
     }
 
     @Test
+    void diffSchemas() {
+        mockWebServer.enqueue(new MockResponse()
+                .setBody("{\"subject\":\"test\",\"version\":1,\"id\":1,\"schema\":\"{\\\"type\\\":\\\"record\\\",\\\"name\\\":\\\"T\\\",\\\"fields\\\":[{\\\"name\\\":\\\"a\\\",\\\"type\\\":\\\"string\\\"}]}\"}")
+                .addHeader("Content-Type", "application/json"));
+        mockWebServer.enqueue(new MockResponse()
+                .setBody("{\"subject\":\"test\",\"version\":2,\"id\":2,\"schema\":\"{\\\"type\\\":\\\"record\\\",\\\"name\\\":\\\"T\\\",\\\"fields\\\":[{\\\"name\\\":\\\"a\\\",\\\"type\\\":\\\"string\\\"},{\\\"name\\\":\\\"b\\\",\\\"type\\\":\\\"int\\\"}]}\"}")
+                .addHeader("Content-Type", "application/json"));
+
+        webTestClient.get().uri("/subjects/test/versions/1/diff/2")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.addedFields[0]").isEqualTo("b")
+                .jsonPath("$.removedFields").isEmpty()
+                .jsonPath("$.changedFields").isEmpty();
+    }
+
+    @Test
     void openApiSpecAvailable() {
         webTestClient.get().uri("/v3/api-docs")
                 .exchange()
@@ -74,4 +92,3 @@ class SchemaRegistryControllerTest {
                 .jsonPath("$.info.title").isEqualTo("Kafka Schema Registry Analyzer API");
     }
 }
-

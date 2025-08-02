@@ -1,7 +1,10 @@
 package com.fattahpour.ksra.service;
 
 import com.fattahpour.ksra.client.SchemaRegistryClient;
+import com.fattahpour.ksra.model.RegisterSchemaRequest;
+import com.fattahpour.ksra.model.RegisterSchemaResponse;
 import com.fattahpour.ksra.model.SchemaDiff;
+import com.fattahpour.ksra.model.SchemaStringResponse;
 import com.fattahpour.ksra.model.SchemaVersionResponse;
 import com.fattahpour.ksra.util.SchemaDiffUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -36,6 +39,28 @@ public class SchemaRegistryService {
      */
     public Flux<Integer> getVersions(String subject) {
         return client.getVersions(subject);
+    }
+
+    /**
+     * Retrieve a schema by its global id.
+     *
+     * @param id schema id
+     * @return schema definition as string
+     */
+    public Mono<String> getSchemaById(int id) {
+        return client.getSchemaById(id).map(SchemaStringResponse::schema);
+    }
+
+    /**
+     * Register a schema under the specified subject.
+     *
+     * @param subject subject name
+     * @param schema  schema definition
+     * @return assigned schema id
+     */
+    public Mono<Integer> registerSchema(String subject, String schema) {
+        RegisterSchemaRequest request = new RegisterSchemaRequest(schema);
+        return client.registerSchema(subject, request).map(RegisterSchemaResponse::id);
     }
 
     /**

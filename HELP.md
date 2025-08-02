@@ -19,6 +19,24 @@ The following guides illustrate how to use some features concretely:
 * [Samples for using Apache Kafka Streams with Spring Cloud stream](https://github.com/spring-cloud/spring-cloud-stream-samples/tree/master/kafka-streams-samples)
 * [Building a RESTful Web Service with Spring Boot Actuator](https://spring.io/guides/gs/actuator-service/)
 
+## Sample Requests
+
+Once the application is running, the Swagger UI is available at `http://localhost:8080/swagger-ui.html`.
+
+Example cURL request to list subjects registered in the local Schema Registry:
+
+```bash
+curl http://localhost:8080/subjects
+```
+
+Register a schema from a file:
+
+```bash
+curl -X POST -H "Content-Type: application/json" \
+     -d '{"schema": "$(cat schema.avsc | jq -Rs .)"}' \
+     http://localhost:8080/subjects/my-subject/versions
+```
+
 ### Maven Parent overrides
 
 Due to Maven's design, elements are inherited from the parent POM to the project POM.

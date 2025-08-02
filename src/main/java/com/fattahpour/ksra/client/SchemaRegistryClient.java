@@ -1,5 +1,8 @@
 package com.fattahpour.ksra.client;
 
+import com.fattahpour.ksra.model.RegisterSchemaRequest;
+import com.fattahpour.ksra.model.RegisterSchemaResponse;
+import com.fattahpour.ksra.model.SchemaStringResponse;
 import com.fattahpour.ksra.model.SchemaVersionResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -56,5 +59,33 @@ public class SchemaRegistryClient {
                 .uri("/subjects/{subject}/versions/{version}", subject, version)
                 .retrieve()
                 .bodyToMono(SchemaVersionResponse.class);
+    }
+
+    /**
+     * Fetch a schema by its global identifier.
+     *
+     * @param id global schema id
+     * @return the schema string
+     */
+    public Mono<SchemaStringResponse> getSchemaById(int id) {
+        return webClient.get()
+                .uri("/schemas/ids/{id}", id)
+                .retrieve()
+                .bodyToMono(SchemaStringResponse.class);
+    }
+
+    /**
+     * Register a new schema under the provided subject.
+     *
+     * @param subject subject name
+     * @param request schema payload
+     * @return assigned schema id
+     */
+    public Mono<RegisterSchemaResponse> registerSchema(String subject, RegisterSchemaRequest request) {
+        return webClient.post()
+                .uri("/subjects/{subject}/versions", subject)
+                .bodyValue(request)
+                .retrieve()
+                .bodyToMono(RegisterSchemaResponse.class);
     }
 }

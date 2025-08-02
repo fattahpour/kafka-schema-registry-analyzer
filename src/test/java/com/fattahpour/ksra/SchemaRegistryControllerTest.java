@@ -51,7 +51,7 @@ class SchemaRegistryControllerTest {
                 .setBody("[1,2]")
                 .addHeader("Content-Type", "application/json"));
         mockWebServer.enqueue(new MockResponse()
-                .setBody("{\"schema\":\"{\\\"type\\\":\\\"record\\\",\\\"name\\\":\\\"Test1\\\"}\"}")
+                .setBody("{\"id\":100,\"schema\":\"{\\\"type\\\":\\\"record\\\",\\\"name\\\":\\\"Test1\\\"}\"}")
                 .addHeader("Content-Type", "application/json"));
 
         webTestClient.get().uri("/api/schema-registry/summary/topic1-value")
@@ -60,7 +60,9 @@ class SchemaRegistryControllerTest {
                 .expectBody()
                 .jsonPath("$[0].subject").isEqualTo("topic1-value")
                 .jsonPath("$[0].topic").isEqualTo("topic1")
-                .jsonPath("$[0].versions[1]").isEqualTo(2);
+                .jsonPath("$[0].versions[1]").isEqualTo(2)
+                .jsonPath("$[0].schemaId").isEqualTo(100)
+                .jsonPath("$[0].schema").isEqualTo("{\"type\":\"record\",\"name\":\"Test1\"}");
     }
 
     @Test

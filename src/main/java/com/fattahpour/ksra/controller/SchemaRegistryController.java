@@ -92,11 +92,13 @@ public class SchemaRegistryController {
                         .retrieve()
                         .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
         ).map(tuple -> {
+            Map<String, Object> latest = tuple.getT2();
             Map<String, Object> result = new HashMap<>();
             result.put("subject", subject);
             result.put("topic", subject.replaceAll("-(value|key)$", ""));
             result.put("versions", tuple.getT1());
-            result.put("latestSchema", tuple.getT2());
+            result.put("schemaId", latest.get("id"));
+            result.put("schema", latest.get("schema"));
             return result;
         }).flux();
     }

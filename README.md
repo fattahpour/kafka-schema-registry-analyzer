@@ -2,14 +2,19 @@
 
 A Spring Boot application for analyzing data in Kafka Schema Registry.
 
+## Release 1.0.0
+- Initial stable release
+- Unified REST endpoints under a single controller
+- Added support for diffing two schema versions
+
 ## Prerequisites
 - Java 17 or later
 - Docker (optional if running in container)
 
 ## Run the application
-Use the Maven wrapper to start the application:
+Use Maven to start the application:
 ```bash
-./mvnw spring-boot:run
+mvn spring-boot:run
 ```
 The REST API is documented and can be exercised via Swagger UI once the app is running:
 ```
@@ -31,9 +36,14 @@ curl -X POST -H "Content-Type: application/json" \
      http://localhost:8080/subjects/my-subject/versions
 ```
 
+Diff two schema versions:
+```bash
+curl http://localhost:8080/subjects/my-subject/versions/1/diff/2
+```
+
 ## Run tests
 Execute the test suite with:
 ```bash
-./mvnw test
+mvn test
 ```
 

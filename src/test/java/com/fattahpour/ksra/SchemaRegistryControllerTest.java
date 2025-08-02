@@ -46,6 +46,38 @@ class SchemaRegistryControllerTest {
     }
 
     @Test
+    void schemaRegistrySummary() {
+        mockWebServer.enqueue(new MockResponse()
+                .setBody("[\"topic1-value\",\"topic2-key\"]")
+                .addHeader("Content-Type", "application/json"));
+
+        mockWebServer.enqueue(new MockResponse()
+                .setBody("[1,2]")
+                .addHeader("Content-Type", "application/json"));
+        mockWebServer.enqueue(new MockResponse()
+                .setBody("{\"schema\":\"{\\\"type\\\":\\\"record\\\",\\\"name\\\":\\\"Test1\\\"}\"}")
+                .addHeader("Content-Type", "application/json"));
+
+        mockWebServer.enqueue(new MockResponse()
+                .setBody("[1]")
+                .addHeader("Content-Type", "application/json"));
+        mockWebServer.enqueue(new MockResponse()
+                .setBody("{\"schema\":\"{\\\"type\\\":\\\"record\\\",\\\"name\\\":\\\"Test2\\\"}\"}")
+                .addHeader("Content-Type", "application/json"));
+
+        webTestClient.get().uri("/api/schema-registry/summary")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$[0].subject").isEqualTo("topic1-value")
+                .jsonPath("$[0].topic").isEqualTo("topic1")
+                .jsonPath("$[0].versions[1]").isEqualTo(2)
+                .jsonPath("$[1].subject").isEqualTo("topic2-key")
+                .jsonPath("$[1].topic").isEqualTo("topic2")
+                .jsonPath("$[1].versions[0]").isEqualTo(1);
+    }
+
+    @Test
     void openApiSpecAvailable() {
         webTestClient.get().uri("/v3/api-docs")
                 .exchange()
